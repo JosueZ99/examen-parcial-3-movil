@@ -1,8 +1,13 @@
 // src/services/apiService.ts
 import axios from "axios";
 
-// Usar el proxy configurado en vite.config.ts
-const API_BASE_URL = "/api/examen.php";
+// Detectar si estamos en desarrollo o producción
+const isDevelopment = import.meta.env.DEV;
+
+// Usar proxy en desarrollo, URL completa en producción
+const API_BASE_URL = isDevelopment
+  ? "/api/examen.php"
+  : "https://puce.estudioika.com/api/examen.php";
 
 export interface User {
   record: number;
@@ -32,12 +37,17 @@ class ApiService {
   // Login de usuario
   async login(username: string, password: string): Promise<User | null> {
     try {
+      console.log(`Intentando login en: ${API_BASE_URL}`);
+
       const response = await axios.get(API_BASE_URL, {
         params: {
           user: username,
           pass: password,
         },
+        timeout: 10000, // 10 segundos de timeout
       });
+
+      console.log("Respuesta del servidor:", response.data);
 
       if (response.data && response.data.length > 0) {
         return response.data[0];
@@ -45,6 +55,22 @@ class ApiService {
       return null;
     } catch (error) {
       console.error("Error en login:", error);
+
+      // Información más detallada del error
+      if (axios.isAxiosError(error)) {
+        if (error.code === "ECONNABORTED") {
+          throw new Error(
+            "Tiempo de espera agotado. Verifique su conexión a internet."
+          );
+        } else if (error.response) {
+          throw new Error(`Error del servidor: ${error.response.status}`);
+        } else if (error.request) {
+          throw new Error(
+            "No se pudo conectar con el servidor. Verifique su conexión a internet."
+          );
+        }
+      }
+
       throw new Error("Error al conectar con el servidor");
     }
   }
@@ -55,6 +81,8 @@ class ApiService {
     joinUser: string
   ): Promise<boolean> {
     try {
+      console.log(`Registrando asistencia en: ${API_BASE_URL}`);
+
       const attendanceData: AttendanceRecord = {
         record_user: recordUser,
         join_user: joinUser,
@@ -64,8 +92,10 @@ class ApiService {
         headers: {
           "Content-Type": "application/json",
         },
+        timeout: 10000,
       });
 
+      console.log("Respuesta registro asistencia:", response.data);
       return response.status === 200;
     } catch (error) {
       console.error("Error registrando asistencia:", error);
@@ -77,7 +107,9 @@ class ApiService {
   // Obtener todos los usuarios (para pruebas)
   async getAllUsers(): Promise<User[]> {
     try {
-      const response = await axios.get(API_BASE_URL);
+      const response = await axios.get(API_BASE_URL, {
+        timeout: 10000,
+      });
       return response.data || [];
     } catch (error) {
       console.error("Error obteniendo usuarios:", error);

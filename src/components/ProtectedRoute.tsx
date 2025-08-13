@@ -1,37 +1,38 @@
 // src/components/ProtectedRoute.tsx
-import React, { useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
-import { IonPage, IonContent, IonSpinner } from '@ionic/react';
-import { useUser } from '../contexts/UserContext';
+import React, { useEffect } from "react";
+import { useHistory } from "react-router-dom";
+import { IonPage, IonContent, IonSpinner } from "@ionic/react";
+import { useUser } from "../contexts/UserContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   redirectTo?: string;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  redirectTo = '/tab1' 
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  redirectTo = "/login",
 }) => {
-  const { user, isLoggedIn } = useUser();
+  const { user } = useUser();
   const history = useHistory();
 
   useEffect(() => {
-    // Si definitivamente no hay usuario, redirigir inmediatamente
-    if (user === null && !isLoggedIn) {
+    // Si no hay usuario logueado, redirigir al login
+    if (!user) {
+      console.log("Usuario no autenticado, redirigiendo a login...");
       history.replace(redirectTo);
+      return;
     }
-  }, [user, isLoggedIn, history, redirectTo]);
+  }, [user, history, redirectTo]);
 
-  // Si no hay usuario, mostrar loading mientras redirige
-  if (!isLoggedIn || !user) {
+  // Mostrar spinner mientras se verifica el usuario
+  if (!user) {
     return (
       <IonPage>
         <IonContent className="bg-gray-100">
           <div className="min-h-screen flex flex-col items-center justify-center">
             <IonSpinner name="crescent" className="text-4xl mb-4" />
             <p className="text-gray-600">Verificando sesión...</p>
-            <p className="text-sm text-gray-500 mt-2">Redirigiendo al login...</p>
           </div>
         </IonContent>
       </IonPage>

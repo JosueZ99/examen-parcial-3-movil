@@ -1,4 +1,4 @@
-// src/pages/Tab3.tsx
+// src/pages/Registro.tsx
 import {
   IonContent,
   IonHeader,
@@ -26,9 +26,9 @@ import { useHistory } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useUser } from "../contexts/UserContext";
 import { apiService, AttendanceDisplay } from "../services/apiService";
-import "./Tab3.css";
+import "./Registro.css";
 
-const Tab3: React.FC = () => {
+const Registro: React.FC = () => {
   const history = useHistory();
   const { user, setUser } = useUser();
   const [attendanceRecords, setAttendanceRecords] = useState<
@@ -61,7 +61,7 @@ const Tab3: React.FC = () => {
 
   const handleLogout = () => {
     setUser(null);
-    history.push("/tab1");
+    history.push("/login");
   };
 
   const getStatusColor = (status: string) => {
@@ -127,7 +127,6 @@ const Tab3: React.FC = () => {
                   <h2 className="text-lg font-semibold text-gray-800">
                     {user!.names} {user!.lastnames}
                   </h2>
-                  <p className="text-gray-600">ID: {user!.id}</p>
                   <p className="text-sm text-gray-500">{user!.mail}</p>
                 </div>
               </div>
@@ -219,15 +218,6 @@ const Tab3: React.FC = () => {
                               {record.time}
                             </span>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <IonIcon
-                              icon={personOutline}
-                              className="text-gray-500 text-sm"
-                            />
-                            <span className="text-sm text-gray-600">
-                              {record.identification}
-                            </span>
-                          </div>
                         </div>
                       </div>
                     </IonItem>
@@ -236,19 +226,10 @@ const Tab3: React.FC = () => {
               </div>
             </IonCardContent>
           </IonCard>
-
-          {/* Nota sobre datos simulados */}
-          <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-            <p className="text-yellow-800 text-sm">
-              <strong>Nota:</strong> Los registros mostrados son datos simulados
-              ya que el endpoint para consultar asistencias aún no está
-              disponible en el servidor.
-            </p>
-          </div>
         </div>
       </IonContent>
     </IonPage>
   );
 };
 
-export default Tab3;
+export default Registro;

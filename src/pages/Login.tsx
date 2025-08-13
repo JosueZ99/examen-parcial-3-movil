@@ -1,4 +1,4 @@
-// src/pages/Tab1.tsx
+// src/pages/Login.tsx
 import {
   IonContent,
   IonPage,
@@ -15,9 +15,9 @@ import { useHistory } from "react-router-dom";
 import { useState } from "react";
 import { useUser } from "../contexts/UserContext";
 import { apiService } from "../services/apiService";
-import "./Tab1.css";
+import "./Login.css";
 
-const Tab1: React.FC = () => {
+const Login: React.FC = () => {
   const history = useHistory();
   const { setUser } = useUser();
   const [identification, setIdentification] = useState("");
@@ -65,7 +65,7 @@ const Tab1: React.FC = () => {
 
         // Redirigir después de 1 segundo
         setTimeout(() => {
-          history.push("/tab2");
+          history.push("/validacion");
         }, 1000);
       } else {
         // Credenciales incorrectas
@@ -169,4 +169,4 @@ const Tab1: React.FC = () => {
   );
 };
 
-export default Tab1;
+export default Login;

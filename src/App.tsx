@@ -3,7 +3,7 @@ import { Redirect, Route } from "react-router-dom";
 import { IonApp, IonRouterOutlet, setupIonicReact } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 import { UserProvider } from "./contexts/UserContext";
-import Tab1 from "./pages/Tab1";
+import Login from "./pages/Login";
 import TabsLayout from "./components/TabsLayout";
 import "@ionic/react/css/core.css";
 import "./globals.css";
@@ -19,18 +19,21 @@ const App: React.FC = () => (
       <IonReactRouter>
         <IonRouterOutlet>
           {/* Página de login sin tabs */}
-          <Route exact path="/tab1">
-            <Tab1 />
+          <Route exact path="/login">
+            <Login />
           </Route>
 
-          {/* Páginas con tabs */}
-          <Route path="/tabs">
+          {/* Páginas con tabs - ahora en el nivel superior */}
+          <Route path="/validacion">
+            <TabsLayout />
+          </Route>
+          <Route path="/registro">
             <TabsLayout />
           </Route>
 
           {/* Redirección inicial */}
           <Route exact path="/">
-            <Redirect to="/tab1" />
+            <Redirect to="/login" />
           </Route>
         </IonRouterOutlet>
       </IonReactRouter>

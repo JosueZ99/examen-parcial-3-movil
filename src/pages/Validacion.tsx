@@ -1,4 +1,4 @@
-// src/pages/Tab2.tsx
+// src/pages/Validacion.tsx
 import {
   IonContent,
   IonHeader,
@@ -18,9 +18,9 @@ import { useHistory } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useUser } from "../contexts/UserContext";
 import { apiService } from "../services/apiService";
-import "./Tab2.css";
+import "./Validacion.css";
 
-const Tab2: React.FC = () => {
+const Validacion: React.FC = () => {
   const history = useHistory();
   const { user, setUser } = useUser();
 
@@ -69,7 +69,7 @@ const Tab2: React.FC = () => {
 
   const handleLogout = () => {
     setUser(null);
-    history.push("/tab1");
+    history.push("/login");
   };
 
   const validateDigits = (): boolean => {
@@ -114,9 +114,9 @@ const Tab2: React.FC = () => {
         setDigit1("");
         setDigit2("");
 
-        // Redirigir a Tab3 después de 2 segundos
+        // Redirigir a registro después de 2 segundos
         setTimeout(() => {
-          history.push("/tab3");
+          history.push("/registro");
         }, 2000);
       } else {
         showMessage(
@@ -133,7 +133,7 @@ const Tab2: React.FC = () => {
 
       // Simular éxito para continuar con la demo
       setTimeout(() => {
-        history.push("/tab3");
+        history.push("/registro");
       }, 2000);
     } finally {
       setIsLoading(false);
@@ -165,7 +165,6 @@ const Tab2: React.FC = () => {
                 <h2 className="text-lg font-semibold text-gray-800">
                   {user!.names} {user!.lastnames}
                 </h2>
-                <p className="text-gray-600">ID: {user!.id}</p>
                 <p className="text-sm text-gray-500">{user!.mail}</p>
               </div>
             </IonCardContent>
@@ -182,7 +181,7 @@ const Tab2: React.FC = () => {
                   <p className="text-blue-700">
                     Para verificar su identidad, ingrese los dígitos que se
                     encuentran en las siguientes posiciones de su número de
-                    identificación <strong>{user!.id}</strong>:
+                    identificación
                   </p>
                 </div>
 
@@ -198,13 +197,10 @@ const Tab2: React.FC = () => {
                         value={digit1}
                         onChange={(e) => setDigit1(e.target.value)}
                         disabled={isLoading}
-                        className="w-16 h-16 text-2xl text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800"
+                        className="w-16 h-16 text-2xl text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-white"
                         placeholder="?"
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Dígito esperado: {user!.id[requestedPositions.pos1 - 1]}
-                    </p>
                   </div>
 
                   <div className="text-center">
@@ -218,13 +214,10 @@ const Tab2: React.FC = () => {
                         value={digit2}
                         onChange={(e) => setDigit2(e.target.value)}
                         disabled={isLoading}
-                        className="w-16 h-16 text-2xl text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800"
+                        className="w-16 h-16 text-2xl text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-white"
                         placeholder="?"
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Dígito esperado: {user!.id[requestedPositions.pos2 - 1]}
-                    </p>
                   </div>
                 </div>
 
@@ -246,18 +239,6 @@ const Tab2: React.FC = () => {
                     )}
                   </IonButton>
                 </div>
-
-                <div className="text-center mt-4">
-                  <IonButton
-                    fill="outline"
-                    color="medium"
-                    onClick={generateRandomPositions}
-                    disabled={isLoading}
-                  >
-                    <IonIcon icon={refreshOutline} className="mr-2" />
-                    Generar Nuevas Posiciones
-                  </IonButton>
-                </div>
               </div>
             </IonCardContent>
           </IonCard>
@@ -276,4 +257,4 @@ const Tab2: React.FC = () => {
   );
 };
 
-export default Tab2;
+export default Validacion;

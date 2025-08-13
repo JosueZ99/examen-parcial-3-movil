@@ -1,5 +1,5 @@
 // src/components/TabsLayout.tsx
-import { Redirect, Route } from "react-router-dom";
+import { Redirect, Route, useLocation } from "react-router-dom";
 import {
   IonRouterOutlet,
   IonTabs,
@@ -10,36 +10,51 @@ import {
 } from "@ionic/react";
 import { checkboxOutline, listOutline } from "ionicons/icons";
 import ProtectedRoute from "./ProtectedRoute";
-import Tab2 from "../pages/Tab2";
-import Tab3 from "../pages/Tab3";
+import Validacion from "../pages/Validacion";
+import Registro from "../pages/Registro";
 
-const TabsLayout: React.FC = () => (
-  <ProtectedRoute>
-    <IonTabs>
-      <IonRouterOutlet>
-        <Route exact path="/tab2">
-          <Tab2 />
-        </Route>
-        <Route exact path="/tab3">
-          <Tab3 />
-        </Route>
-        <Route exact path="/tabs">
-          <Redirect to="/tab2" />
-        </Route>
-      </IonRouterOutlet>
+const TabsLayout: React.FC = () => {
+  const location = useLocation();
 
-      <IonTabBar slot="bottom">
-        <IonTabButton tab="tab2" href="/tab2">
-          <IonIcon icon={checkboxOutline} />
-          <IonLabel>Validación</IonLabel>
-        </IonTabButton>
-        <IonTabButton tab="tab3" href="/tab3">
-          <IonIcon icon={listOutline} />
-          <IonLabel>Registros</IonLabel>
-        </IonTabButton>
-      </IonTabBar>
-    </IonTabs>
-  </ProtectedRoute>
-);
+  return (
+    <ProtectedRoute>
+      <IonTabs>
+        <IonRouterOutlet>
+          <Route exact path="/validacion">
+            <Validacion />
+          </Route>
+          <Route exact path="/registro">
+            <Registro />
+          </Route>
+          {/* Redirección por defecto si alguien accede a una ruta no válida */}
+          <Route exact path="/">
+            <Redirect to="/validacion" />
+          </Route>
+        </IonRouterOutlet>
+
+        <IonTabBar slot="bottom">
+          <IonTabButton
+            tab="validacion"
+            href="/validacion"
+            className={
+              location.pathname === "/validacion" ? "tab-selected" : ""
+            }
+          >
+            <IonIcon icon={checkboxOutline} />
+            <IonLabel>Validación</IonLabel>
+          </IonTabButton>
+          <IonTabButton
+            tab="registro"
+            href="/registro"
+            className={location.pathname === "/registro" ? "tab-selected" : ""}
+          >
+            <IonIcon icon={listOutline} />
+            <IonLabel>Registros</IonLabel>
+          </IonTabButton>
+        </IonTabBar>
+      </IonTabs>
+    </ProtectedRoute>
+  );
+};
 
 export default TabsLayout;

@@ -86,7 +86,7 @@ const Validacion: React.FC = () => {
       return;
     }
 
-    // Validar dígitos
+    // Validar dígitos en el frontend
     if (!validateDigits()) {
       showMessage(
         "Los dígitos ingresados no son correctos. Verifique las posiciones solicitadas.",
@@ -98,14 +98,8 @@ const Validacion: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Crear código de validación concatenando los dígitos
-      const joinUser = digit1 + digit2;
-
-      // Intentar registrar asistencia
-      const success = await apiService.registerAttendance(
-        user!.record,
-        joinUser
-      );
+      // Enviar solo el record del usuario al servidor
+      const success = await apiService.registerAttendance(user!.record);
 
       if (success) {
         showMessage("¡Asistencia registrada exitosamente!", "success");
@@ -114,9 +108,9 @@ const Validacion: React.FC = () => {
         setDigit1("");
         setDigit2("");
 
-        // Redirigir a registro después de 2 segundos
+        // Redirigir a registro después de 2 segundos con señal de refresh
         setTimeout(() => {
-          history.push("/registro");
+          history.push("/registro", { shouldRefresh: true });
         }, 2000);
       } else {
         showMessage(
@@ -124,17 +118,15 @@ const Validacion: React.FC = () => {
           "danger"
         );
       }
-    } catch (error) {
-      showMessage(
-        "Error de conexión. La asistencia se simuló exitosamente (problema temporal del servidor).",
-        "warning"
-      );
+    } catch (error: unknown) {
       console.error("Error registrando asistencia:", error);
 
-      // Simular éxito para continuar con la demo
-      setTimeout(() => {
-        history.push("/registro");
-      }, 2000);
+      // Mostrar mensaje de error más específico
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error de conexión al registrar asistencia.";
+      showMessage(errorMessage, "danger");
     } finally {
       setIsLoading(false);
     }

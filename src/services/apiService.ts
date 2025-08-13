@@ -21,16 +21,24 @@ export interface User {
 
 export interface AttendanceRecord {
   record_user: number;
-  join_user: string;
+  join_user: number;
 }
 
+// Nueva interfaz para los registros que devuelve la API
+export interface AttendanceResponse {
+  record: number;
+  date: string;
+  time: string;
+  join_date: string;
+}
+
+// Interfaz para mostrar en la UI
 export interface AttendanceDisplay {
   id: number;
-  identification: string;
-  name: string;
   time: string;
   date: string;
   status: "presente" | "tardanza";
+  join_date: string;
 }
 
 class ApiService {
@@ -75,18 +83,17 @@ class ApiService {
     }
   }
 
-  // Registrar asistencia
-  async registerAttendance(
-    recordUser: number,
-    joinUser: string
-  ): Promise<boolean> {
+  // Registrar asistencia - Ahora envía el record del usuario en ambos campos
+  async registerAttendance(userRecord: number): Promise<boolean> {
     try {
       console.log(`Registrando asistencia en: ${API_BASE_URL}`);
 
       const attendanceData: AttendanceRecord = {
-        record_user: recordUser,
-        join_user: joinUser,
+        record_user: userRecord,
+        join_user: userRecord,
       };
+
+      console.log("Datos enviados para registro:", attendanceData);
 
       const response = await axios.post(API_BASE_URL, attendanceData, {
         headers: {
@@ -99,8 +106,86 @@ class ApiService {
       return response.status === 200;
     } catch (error) {
       console.error("Error registrando asistencia:", error);
-      // Por ahora retornamos true para simular éxito hasta que se arregle la base de datos
-      return true;
+
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          throw new Error(
+            `Error del servidor: ${error.response.status} - ${
+              error.response.data?.error || "Error desconocido"
+            }`
+          );
+        } else if (error.request) {
+          throw new Error(
+            "No se pudo conectar con el servidor. Verifique su conexión a internet."
+          );
+        }
+      }
+
+      throw new Error("Error al registrar asistencia");
+    }
+  }
+
+  // Obtener registros de asistencia del usuario
+  async getAttendanceRecords(userRecord: number): Promise<AttendanceDisplay[]> {
+    try {
+      console.log(
+        `Obteniendo registros de asistencia para record: ${userRecord}`
+      );
+
+      const response = await axios.get(API_BASE_URL, {
+        params: {
+          record: userRecord,
+        },
+        timeout: 10000,
+      });
+
+      console.log("Respuesta registros asistencia:", response.data);
+
+      if (response.data && Array.isArray(response.data)) {
+        return response.data
+          .map((record: AttendanceResponse) => {
+            // Determinar el status basado en la hora (asumiendo que antes de 9:00 AM es presente)
+            const timeParts = record.time.split(":");
+            const hour = parseInt(timeParts[0]);
+            const minute = parseInt(timeParts[1]);
+
+            // Considerar presente si es antes de 9:00 AM
+            const status: "presente" | "tardanza" =
+              hour < 9 || (hour === 9 && minute === 0)
+                ? "presente"
+                : "tardanza";
+
+            return {
+              id: record.record,
+              time: record.time,
+              date: record.date,
+              status: status,
+              join_date: record.join_date,
+            };
+          })
+          .sort((a, b) => {
+            // Ordenar por fecha y hora descendente (más reciente primero)
+            return (
+              new Date(b.join_date).getTime() - new Date(a.join_date).getTime()
+            );
+          });
+      }
+
+      return [];
+    } catch (error) {
+      console.error("Error obteniendo registros de asistencia:", error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          throw new Error(`Error del servidor: ${error.response.status}`);
+        } else if (error.request) {
+          throw new Error(
+            "No se pudo conectar con el servidor. Verifique su conexión a internet."
+          );
+        }
+      }
+
+      throw new Error("Error al obtener registros de asistencia");
     }
   }
 
@@ -117,8 +202,8 @@ class ApiService {
     }
   }
 
-  // Simular registros de asistencia (hasta que exista el endpoint)
-  getSimulatedAttendance(user: User): AttendanceDisplay[] {
+  // Mantener método simulado como respaldo
+  getSimulatedAttendance(): AttendanceDisplay[] {
     const records: AttendanceDisplay[] = [];
     const today = new Date();
 
@@ -132,7 +217,7 @@ class ApiService {
       const minute = Math.floor(Math.random() * 60);
       const timeString = `${hour.toString().padStart(2, "0")}:${minute
         .toString()
-        .padStart(2, "0")} AM`;
+        .padStart(2, "0")}:00`;
 
       // Determinar status basado en la hora
       const status: "presente" | "tardanza" =
@@ -142,11 +227,10 @@ class ApiService {
 
       records.push({
         id: i + 1,
-        identification: user.id,
-        name: `${user.names} ${user.lastnames}`,
         time: timeString,
         date: date.toISOString().split("T")[0],
         status: status,
+        join_date: `${date.toISOString().split("T")[0]} ${timeString}`,
       });
     }
 

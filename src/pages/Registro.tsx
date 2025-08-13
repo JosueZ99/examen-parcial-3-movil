@@ -179,9 +179,6 @@ const Registro: React.FC = () => {
                     {user!.names} {user!.lastnames}
                   </h2>
                   <p className="text-sm text-gray-500">{user!.mail}</p>
-                  <p className="text-xs text-gray-400">
-                    Record: {user!.record}
-                  </p>
                 </div>
               </div>
             </IonCardContent>

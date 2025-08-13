@@ -144,16 +144,40 @@ class ApiService {
       if (response.data && Array.isArray(response.data)) {
         return response.data
           .map((record: AttendanceResponse) => {
-            // Determinar el status basado en la hora (asumiendo que antes de 9:00 AM es presente)
+            // Obtener el día de la semana de la fecha del registro
+            const dateParts = record.date.split("-");
+            const year = parseInt(dateParts[0]);
+            const month = parseInt(dateParts[1]) - 1; // Los meses en JS van de 0-11
+            const day = parseInt(dateParts[2]);
+            const recordDate = new Date(year, month, day);
+            const dayOfWeek = recordDate.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
+
+            // Parsear la hora del registro
             const timeParts = record.time.split(":");
             const hour = parseInt(timeParts[0]);
             const minute = parseInt(timeParts[1]);
 
-            // Considerar presente si es antes de 9:00 AM
-            const status: "presente" | "tardanza" =
-              hour < 9 || (hour === 9 && minute === 0)
-                ? "presente"
-                : "tardanza";
+            let status: "presente" | "tardanza" = "presente";
+
+            // Aplicar lógica específica por día de clase
+            if (dayOfWeek === 3) {
+              // Miércoles
+              // Después de 5:00 PM (17:00) es tardanza
+              if (hour > 17 || (hour === 17 && minute > 0)) {
+                status = "tardanza";
+              }
+            } else if (dayOfWeek === 6) {
+              // Sábado
+              // Después de 8:00 AM es tardanza
+              if (hour > 8 || (hour === 8 && minute > 0)) {
+                status = "tardanza";
+              }
+            } else {
+              // Para otros días, usar lógica por defecto (antes de 9:00 AM es presente)
+              if (hour > 9 || (hour === 9 && minute > 0)) {
+                status = "tardanza";
+              }
+            }
 
             return {
               id: record.record,
@@ -211,19 +235,50 @@ class ApiService {
     for (let i = 0; i < 8; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
+      const dayOfWeek = date.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
 
-      // Simular horarios aleatorios entre 8:00 y 9:30
-      const hour = Math.random() < 0.7 ? 8 : 9;
-      const minute = Math.floor(Math.random() * 60);
+      let hour: number, minute: number;
+
+      // Simular horarios según el día de la semana
+      if (dayOfWeek === 3) {
+        // Miércoles
+        // Simular entre 4:30 PM y 5:30 PM
+        hour = Math.random() < 0.7 ? 16 : 17;
+        minute = Math.floor(Math.random() * 60);
+      } else if (dayOfWeek === 6) {
+        // Sábado
+        // Simular entre 7:30 AM y 8:30 AM
+        hour = Math.random() < 0.7 ? 7 : 8;
+        minute = Math.floor(Math.random() * 60);
+      } else {
+        // Para otros días, simular horarios de oficina
+        hour = Math.random() < 0.7 ? 8 : 9;
+        minute = Math.floor(Math.random() * 60);
+      }
+
       const timeString = `${hour.toString().padStart(2, "0")}:${minute
         .toString()
         .padStart(2, "0")}:00`;
 
-      // Determinar status basado en la hora
-      const status: "presente" | "tardanza" =
-        (hour === 8 && minute <= 30) || (hour === 9 && minute <= 0)
-          ? "presente"
-          : "tardanza";
+      // Determinar status basado en la lógica de clase
+      let status: "presente" | "tardanza" = "presente";
+
+      if (dayOfWeek === 3) {
+        // Miércoles
+        if (hour > 17 || (hour === 17 && minute > 0)) {
+          status = "tardanza";
+        }
+      } else if (dayOfWeek === 6) {
+        // Sábado
+        if (hour > 8 || (hour === 8 && minute > 0)) {
+          status = "tardanza";
+        }
+      } else {
+        // Para otros días, lógica por defecto
+        if (hour > 9 || (hour === 9 && minute > 0)) {
+          status = "tardanza";
+        }
+      }
 
       records.push({
         id: i + 1,

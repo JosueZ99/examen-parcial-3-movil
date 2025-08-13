@@ -1,7 +1,6 @@
 // src/components/ProtectedRoute.tsx
-import React, { useEffect } from "react";
-import { useHistory } from "react-router-dom";
-import { IonPage, IonContent, IonSpinner } from "@ionic/react";
+import React from "react";
+import { Redirect } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 
 interface ProtectedRouteProps {
@@ -14,29 +13,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo = "/login",
 }) => {
   const { user } = useUser();
-  const history = useHistory();
 
-  useEffect(() => {
-    // Si no hay usuario logueado, redirigir al login
-    if (!user) {
-      console.log("Usuario no autenticado, redirigiendo a login...");
-      history.replace(redirectTo);
-      return;
-    }
-  }, [user, history, redirectTo]);
-
-  // Mostrar spinner mientras se verifica el usuario
+  // Si no hay usuario, redirigir inmediatamente usando Redirect
   if (!user) {
-    return (
-      <IonPage>
-        <IonContent className="bg-gray-100">
-          <div className="min-h-screen flex flex-col items-center justify-center">
-            <IonSpinner name="crescent" className="text-4xl mb-4" />
-            <p className="text-gray-600">Verificando sesión...</p>
-          </div>
-        </IonContent>
-      </IonPage>
-    );
+    return <Redirect to={redirectTo} />;
   }
 
   // Si hay usuario, renderizar el componente protegido

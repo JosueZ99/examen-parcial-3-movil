@@ -11,45 +11,133 @@ import {
   IonToast,
   IonButtons,
   IonIcon,
+  IonSpinner,
 } from "@ionic/react";
-import { logOutOutline } from "ionicons/icons";
+import { logOutOutline, refreshOutline } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useUser } from "../contexts/UserContext";
+import { apiService } from "../services/apiService";
 import "./Tab2.css";
 
 const Tab2: React.FC = () => {
   const history = useHistory();
+  const { user, setUser } = useUser();
 
-  // Datos de prueba
-  const [requestedPositions] = useState({ pos1: 2, pos2: 7 });
+  // Estados para las posiciones solicitadas
+  const [requestedPositions, setRequestedPositions] = useState({
+    pos1: 1,
+    pos2: 2,
+  });
   const [digit1, setDigit1] = useState("");
   const [digit2, setDigit2] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastColor, setToastColor] = useState<
+    "success" | "danger" | "warning"
+  >("success");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Generar posiciones aleatorias al cargar el componente
+  useEffect(() => {
+    generateRandomPositions();
+  }, []);
+
+  const generateRandomPositions = () => {
+    const idLength = user!.id.length;
+    const pos1 = Math.floor(Math.random() * idLength) + 1; // Posición 1-indexed
+    let pos2 = Math.floor(Math.random() * idLength) + 1;
+
+    // Asegurar que las posiciones sean diferentes
+    while (pos2 === pos1) {
+      pos2 = Math.floor(Math.random() * idLength) + 1;
+    }
+
+    setRequestedPositions({ pos1, pos2 });
+    setDigit1("");
+    setDigit2("");
+  };
+
+  const showMessage = (
+    message: string,
+    color: "success" | "danger" | "warning" = "success"
+  ) => {
+    setToastMessage(message);
+    setToastColor(color);
+    setShowToast(true);
+  };
 
   const handleLogout = () => {
+    setUser(null);
     history.push("/tab1");
   };
 
-  const handleValidateAndRegister = () => {
+  const validateDigits = (): boolean => {
+    const idString = user!.id;
+    const expectedDigit1 = idString[requestedPositions.pos1 - 1]; // Convertir a 0-indexed
+    const expectedDigit2 = idString[requestedPositions.pos2 - 1];
+
+    return digit1 === expectedDigit1 && digit2 === expectedDigit2;
+  };
+
+  const handleValidateAndRegister = async () => {
     if (!digit1 || !digit2) {
-      setToastMessage("Por favor complete ambos campos");
-      setShowToast(true);
+      showMessage("Por favor complete ambos campos", "warning");
       return;
     }
 
-    // Simulación de validación exitosa
-    setToastMessage("¡Asistencia registrada exitosamente!");
-    setShowToast(true);
+    // Validar dígitos
+    if (!validateDigits()) {
+      showMessage(
+        "Los dígitos ingresados no son correctos. Verifique las posiciones solicitadas.",
+        "danger"
+      );
+      return;
+    }
 
-    // Limpiar campos
-    setDigit1("");
-    setDigit2("");
+    setIsLoading(true);
 
-    // Redirigir a Tab3 después de 2 segundos
-    setTimeout(() => {
-      history.push("/tabs/tab3");
-    }, 2000);
+    try {
+      // Crear código de validación concatenando los dígitos
+      const joinUser = digit1 + digit2;
+
+      // Intentar registrar asistencia
+      const success = await apiService.registerAttendance(
+        user!.record,
+        joinUser
+      );
+
+      if (success) {
+        showMessage("¡Asistencia registrada exitosamente!", "success");
+
+        // Limpiar campos
+        setDigit1("");
+        setDigit2("");
+
+        // Redirigir a Tab3 después de 2 segundos
+        setTimeout(() => {
+          history.push("/tab3");
+        }, 2000);
+      } else {
+        showMessage(
+          "Error al registrar asistencia. Intente nuevamente.",
+          "danger"
+        );
+      }
+    } catch (error) {
+      showMessage(
+        "Error de conexión. La asistencia se simuló exitosamente (problema temporal del servidor).",
+        "warning"
+      );
+      console.error("Error registrando asistencia:", error);
+
+      // Simular éxito para continuar con la demo
+      setTimeout(() => {
+        history.push("/tab3");
+      }, 2000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -58,6 +146,9 @@ const Tab2: React.FC = () => {
         <IonToolbar color="primary">
           <IonTitle>Validación de datos</IonTitle>
           <IonButtons slot="end">
+            <IonButton onClick={generateRandomPositions} disabled={isLoading}>
+              <IonIcon icon={refreshOutline} />
+            </IonButton>
             <IonButton onClick={handleLogout}>
               <IonIcon icon={logOutOutline} />
             </IonButton>
@@ -67,6 +158,19 @@ const Tab2: React.FC = () => {
 
       <IonContent fullscreen className="bg-gray-100">
         <div className="p-4">
+          {/* Información del usuario */}
+          <IonCard className="mb-4">
+            <IonCardContent>
+              <div className="text-center">
+                <h2 className="text-lg font-semibold text-gray-800">
+                  {user!.names} {user!.lastnames}
+                </h2>
+                <p className="text-gray-600">ID: {user!.id}</p>
+                <p className="text-sm text-gray-500">{user!.mail}</p>
+              </div>
+            </IonCardContent>
+          </IonCard>
+
           {/* Formulario de validación */}
           <IonCard className="mb-4">
             <IonCardContent>
@@ -78,7 +182,7 @@ const Tab2: React.FC = () => {
                   <p className="text-blue-700">
                     Para verificar su identidad, ingrese los dígitos que se
                     encuentran en las siguientes posiciones de su número de
-                    identificación:
+                    identificación <strong>{user!.id}</strong>:
                   </p>
                 </div>
 
@@ -93,10 +197,14 @@ const Tab2: React.FC = () => {
                         maxLength={1}
                         value={digit1}
                         onChange={(e) => setDigit1(e.target.value)}
-                        className="w-16 h-16 text-2xl text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-white"
+                        disabled={isLoading}
+                        className="w-16 h-16 text-2xl text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800"
                         placeholder="?"
                       />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Dígito esperado: {user!.id[requestedPositions.pos1 - 1]}
+                    </p>
                   </div>
 
                   <div className="text-center">
@@ -109,10 +217,14 @@ const Tab2: React.FC = () => {
                         maxLength={1}
                         value={digit2}
                         onChange={(e) => setDigit2(e.target.value)}
-                        className="w-16 h-16 text-2xl text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-white"
+                        disabled={isLoading}
+                        className="w-16 h-16 text-2xl text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800"
                         placeholder="?"
                       />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Dígito esperado: {user!.id[requestedPositions.pos2 - 1]}
+                    </p>
                   </div>
                 </div>
 
@@ -121,9 +233,29 @@ const Tab2: React.FC = () => {
                     expand="block"
                     color="primary"
                     onClick={handleValidateAndRegister}
+                    disabled={isLoading}
                     className="h-12"
                   >
-                    Validar y Registrar Asistencia
+                    {isLoading ? (
+                      <>
+                        <IonSpinner name="crescent" className="mr-2" />
+                        Registrando...
+                      </>
+                    ) : (
+                      "Validar y Registrar Asistencia"
+                    )}
+                  </IonButton>
+                </div>
+
+                <div className="text-center mt-4">
+                  <IonButton
+                    fill="outline"
+                    color="medium"
+                    onClick={generateRandomPositions}
+                    disabled={isLoading}
+                  >
+                    <IonIcon icon={refreshOutline} className="mr-2" />
+                    Generar Nuevas Posiciones
                   </IonButton>
                 </div>
               </div>
@@ -135,9 +267,9 @@ const Tab2: React.FC = () => {
           isOpen={showToast}
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
-          duration={2000}
+          duration={3000}
           position="bottom"
-          color={toastMessage.includes("exitosamente") ? "success" : "warning"}
+          color={toastColor}
         />
       </IonContent>
     </IonPage>

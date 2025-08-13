@@ -8,19 +8,82 @@ import {
   IonLabel,
   IonInput,
   IonButton,
+  IonToast,
+  IonSpinner,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import { useState } from "react";
+import { useUser } from "../contexts/UserContext";
+import { apiService } from "../services/apiService";
 import "./Tab1.css";
 
 const Tab1: React.FC = () => {
   const history = useHistory();
+  const { setUser } = useUser();
   const [identification, setIdentification] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastColor, setToastColor] = useState<
+    "success" | "danger" | "warning"
+  >("success");
 
-  const handleSubmit = () => {
-    // Redirigir a las páginas con tabs
-    history.push("/tabs/tab2");
+  const showMessage = (
+    message: string,
+    color: "success" | "danger" | "warning" = "success"
+  ) => {
+    setToastMessage(message);
+    setToastColor(color);
+    setShowToast(true);
+  };
+
+  const handleSubmit = async () => {
+    // Validaciones básicas
+    if (!identification.trim()) {
+      showMessage("Por favor ingrese su identificación", "warning");
+      return;
+    }
+
+    if (!password.trim()) {
+      showMessage("Por favor ingrese su contraseña", "warning");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const user = await apiService.login(
+        identification.trim(),
+        password.trim()
+      );
+
+      if (user) {
+        // Login exitoso
+        setUser(user);
+        showMessage(`¡Bienvenido ${user.names}!`, "success");
+
+        // Redirigir después de 1 segundo
+        setTimeout(() => {
+          history.push("/tab2");
+        }, 1000);
+      } else {
+        // Credenciales incorrectas
+        showMessage(
+          "Credenciales incorrectas. Verifique su usuario y contraseña.",
+          "danger"
+        );
+      }
+    } catch (error) {
+      // Error de conexión
+      showMessage(
+        "Error al conectar con el servidor. Intente nuevamente.",
+        "danger"
+      );
+      console.error("Error en login:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,13 +101,14 @@ const Tab1: React.FC = () => {
 
               <div className="space-y-4">
                 <IonItem>
-                  <IonLabel position="floating">Identificación</IonLabel>
+                  <IonLabel position="floating">Usuario</IonLabel>
                   <IonInput
                     type="text"
                     value={identification}
                     onIonInput={(e) => setIdentification(e.detail.value!)}
-                    maxlength={10}
+                    disabled={isLoading}
                     className="mt-4"
+                    placeholder="Ingrese su usuario"
                   />
                 </IonItem>
 
@@ -54,7 +118,9 @@ const Tab1: React.FC = () => {
                     type="password"
                     value={password}
                     onIonInput={(e) => setPassword(e.detail.value!)}
+                    disabled={isLoading}
                     className="mt-4"
+                    placeholder="Ingrese su contraseña"
                   />
                 </IonItem>
 
@@ -63,15 +129,41 @@ const Tab1: React.FC = () => {
                     expand="block"
                     color="primary"
                     onClick={handleSubmit}
+                    disabled={isLoading}
                     className="h-12"
                   >
-                    Iniciar Sesión
+                    {isLoading ? (
+                      <>
+                        <IonSpinner name="crescent" className="mr-2" />
+                        Verificando...
+                      </>
+                    ) : (
+                      "Iniciar Sesión"
+                    )}
                   </IonButton>
+                </div>
+
+                {/* Información de prueba (remover en producción) */}
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
+                  <p className="text-blue-800 font-semibold mb-1">
+                    Datos de prueba:
+                  </p>
+                  <p className="text-blue-600">Usuario: jjzambranoz</p>
+                  <p className="text-blue-600">Contraseña: 1725344772</p>
                 </div>
               </div>
             </IonCardContent>
           </IonCard>
         </div>
+
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={3000}
+          position="bottom"
+          color={toastColor}
+        />
       </IonContent>
     </IonPage>
   );

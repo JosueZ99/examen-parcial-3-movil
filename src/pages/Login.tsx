@@ -142,15 +142,6 @@ const Login: React.FC = () => {
                     )}
                   </IonButton>
                 </div>
-
-                {/* Información de prueba (remover en producción) */}
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
-                  <p className="text-blue-800 font-semibold mb-1">
-                    Datos de prueba:
-                  </p>
-                  <p className="text-blue-600">Usuario: jjzambranoz</p>
-                  <p className="text-blue-600">Contraseña: 1725344772</p>
-                </div>
               </div>
             </IonCardContent>
           </IonCard>
